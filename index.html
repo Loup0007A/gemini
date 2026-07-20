@@ -10,6 +10,7 @@
       --card-bg: #ffffff;
       --user-msg: #007aff;
       --ai-msg: #e5e5ea;
+      --border-color: #c6c6c8;
       --text-color: #000000;
     }
 
@@ -34,24 +35,36 @@
     header {
       background: var(--card-bg);
       padding: 12px 16px;
-      text-align: center;
-      border-bottom: 1px solid #c6c6c8;
+      border-bottom: 1px solid var(--border-color);
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    header h1 {
+    .header-title {
       font-size: 17px;
       font-weight: 600;
+      text-align: center;
     }
 
-    .key-btn {
-      background: none;
-      border: none;
-      color: #007aff;
-      font-size: 14px;
-      cursor: pointer;
+    .api-key-container {
+      display: flex;
+      gap: 8px;
+    }
+
+    .api-key-container input {
+      flex: 1;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 13px;
+      background: #f9f9f9;
+      outline: none;
+    }
+
+    .api-key-container input:focus {
+      background: #ffffff;
+      border-color: #007aff;
     }
 
     #chat-box {
@@ -65,7 +78,7 @@
     }
 
     .message {
-      max-width: 80%;
+      max-width: 82%;
       padding: 10px 14px;
       border-radius: 18px;
       font-size: 15px;
@@ -92,19 +105,20 @@
       background: transparent;
       color: #8e8e93;
       font-size: 13px;
+      text-align: center;
     }
 
     footer {
       background: var(--card-bg);
       padding: 10px 12px 24px 12px;
-      border-top: 1px solid #c6c6c8;
+      border-top: 1px solid var(--border-color);
       display: flex;
       gap: 8px;
     }
 
     textarea {
       flex: 1;
-      border: 1px solid #c6c6c8;
+      border: 1px solid var(--border-color);
       border-radius: 20px;
       padding: 8px 14px;
       font-size: 15px;
@@ -137,12 +151,14 @@
 <body>
 
   <header>
-    <h1>Gemini Flash</h1>
-    <button class="key-btn" onclick="setApiKey()">Clé API</button>
+    <div class="header-title">Gemini Flash</div>
+    <div class="api-key-container">
+      <input type="password" id="api-key-input" placeholder="Colle ta clé API ici (AIStudio)..." autocomplete="off" />
+    </div>
   </header>
 
   <div id="chat-box">
-    <div class="message system">Pose une question pour démarrer.</div>
+    <div class="message system">Entre ta clé API ci-dessus, puis écris ton message.</div>
   </div>
 
   <footer>
@@ -154,26 +170,18 @@
     const CHAT_BOX = document.getElementById('chat-box');
     const INPUT = document.getElementById('user-input');
     const SEND_BTN = document.getElementById('send-btn');
+    const API_KEY_INPUT = document.getElementById('api-key-input');
 
-    // Récupérer ou demander la clé API
-    function getApiKey() {
-      let key = localStorage.getItem('gemini_api_key');
-      if (!key) {
-        key = prompt("Entre ta clé API Google AI Studio :");
-        if (key) {
-          localStorage.setItem('gemini_api_key', key.trim());
-        }
-      }
-      return key;
+    // Charger la clé API sauvegardée si elle existe
+    const savedKey = localStorage.getItem('gemini_api_key');
+    if (savedKey) {
+      API_KEY_INPUT.value = savedKey;
     }
 
-    function setApiKey() {
-      const currentKey = localStorage.getItem('gemini_api_key') || "";
-      const newKey = prompt("Renseigne ta clé API :", currentKey);
-      if (newKey !== null) {
-        localStorage.setItem('gemini_api_key', newKey.trim());
-      }
-    }
+    // Sauvegarder automatiquement dès que la clé est modifiée
+    API_KEY_INPUT.addEventListener('input', () => {
+      localStorage.setItem('gemini_api_key', API_KEY_INPUT.value.trim());
+    });
 
     // Ajustement automatique de la hauteur du champ texte
     INPUT.addEventListener('input', () => {
@@ -191,13 +199,18 @@
 
     async function sendMessage() {
       const promptText = INPUT.value.trim();
-      if (!promptText) return;
+      const apiKey = API_KEY_INPUT.value.trim();
 
-      const apiKey = getApiKey();
       if (!apiKey) {
-        alert("Une clé API est requise pour continuer.");
+        alert("Renseigne d'abord ta clé API dans le champ en haut.");
+        API_KEY_INPUT.focus();
         return;
       }
+
+      if (!promptText) return;
+
+      // Masquer le type mot de passe si on souhaite garder l'input propre
+      localStorage.setItem('gemini_api_key', apiKey);
 
       // Ajouter le message utilisateur
       appendMessage(promptText, 'user');
